@@ -11,3 +11,17 @@
 //endian macros
 #define btoll(dtbuf) (dtbuf[3]<<24) | (dtbuf[2]<<16) | (dtbuf[1]<<8) | dtbuf[0];
 #define btols(dtbuf) (dtbuf[1]<<8) | dtbuf[0];
+
+#ifdef _WIN32
+typedef off_t	OFFT;
+#endif
+#ifdef _BSD
+typedef off_t OFFT;
+#endif
+#ifdef __APPLE__
+typedef off_t OFFT;
+#else
+typedef off64_t OFFT;
+#endif
+
+int handlefile(OFFT offset, int dtable);

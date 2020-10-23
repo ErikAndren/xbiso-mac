@@ -8,7 +8,7 @@ Copyright (C) 2003  Stefan Alfredsson	<xbiso@alfredsson.org>
 
 Other contributors.
 Capelle Benoit	<capelle@free.fr>
-Rasmus Rohde	<rohde@duff.dk> 
+Rasmus Rohde	<rohde@duff.dk>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -84,16 +84,6 @@ FILE *xiso;
 int xisocompat=0;
 void *buffer;
 
-#ifdef _WIN32
-typedef off_t	OFFT;
-#endif
-#ifdef _BSD
-typedef off_t OFFT;
-#else
-typedef off64_t OFFT;
-#endif
-
-
 int main(int argc, char *argv[]) {
   char *dbuf,*fname;
   long dtable, dtablesize;
@@ -128,7 +118,7 @@ int main(int argc, char *argv[]) {
   dbuf = malloc(1);
   memset(dbuf, 0, 1);
   strcpy(fname,argv[1]);
-  
+
 #ifdef USE_FTP
   while((ret = getopt(argc,argv,"h:u:p:i:fxvd:")) != -1)
 #else
@@ -145,7 +135,7 @@ int main(int argc, char *argv[]) {
 #ifdef USE_FTP
 	case 'f':
 	  ftp=1;
-	  break;				
+	  break;
 	case 'h':
 	  if(!ftp) { help=1;err(argv[0]); }
 	  host = optarg == NULL ? NULL : strdup(optarg);
@@ -176,18 +166,18 @@ int main(int argc, char *argv[]) {
 	  break;
 	}
       }
-  
+
   //set the dirname to the filename - ext if blank
   if(strcmp(dbuf,"")==0) {
     dbuf = realloc(dbuf, (size_t)(strlen((fname))));
     memset(dbuf, 0, (size_t)(strlen((fname))));
     snprintf(dbuf,(size_t)(strlen(fname))-3,"%s",fname);
   }
-  
+
   buffer = malloc(0x400);
   memset(buffer,0,0x400);
-  
-  
+
+
 #ifdef USE_FTP
   if(ftp) {
     if (!ftpOpen(host)) {
@@ -205,7 +195,7 @@ int main(int argc, char *argv[]) {
     printf("FTP connected to ftp://%s:*****@%s/%s\n", user, host, initdir);
   }
 #endif
-    
+
 
 #ifdef _WIN32
   xiso = fopen(fname, "rb");
@@ -218,7 +208,7 @@ int main(int argc, char *argv[]) {
 
   if(xiso==NULL) err("Error opening file.\n");
 
-    
+
 #ifdef USE_FTP
   if(ftp) {
     if ( ftpMkdir(dbuf) != 1)  err("Failed to create root directory on FTP\n");
@@ -226,7 +216,7 @@ int main(int argc, char *argv[]) {
     if ( ftpChdir(dbuf) != 1)  err("Failed to change into root directory on FTP\n");
   } else {
 #endif
-	
+
 #ifdef _WIN32
     CreateDirectory(dbuf,NULL);
     SetCurrentDirectory(dbuf);
@@ -244,17 +234,17 @@ int main(int argc, char *argv[]) {
 
 
   fread(dtbuf, 1, 4, xiso);				//Sector that root directory table resides in
-  dtable = btoll(dtbuf);	
+  dtable = btoll(dtbuf);
   fread(dtbuf, 1, 4, xiso);				//Size of root directory table in bytes
   dtablesize = btoll(dtbuf);
   xbfseek(xiso, (OFFT)xbftell(xiso)+8, SEEK_SET);			//discard FILETIME structure representing image creation time
   xbfseek(xiso, (OFFT)xbftell(xiso)+0x7c8, SEEK_SET);		//discard unused
   fread(buffer, 0x14, 1, xiso);					//header tail
   if( (strncmp(buffer,XMEDHEAD,0x14)) != 0) err("Error possible corruption?\n"); //check end
-  
-  
+
+
   handlefile((OFFT)dtable*2048, dtable);
-  
+
   printf("End of archive\n");
   fclose(xiso);
   free(buffer);
@@ -268,9 +258,9 @@ int main(int argc, char *argv[]) {
   exit(0);
 }
 
-handlefile(OFFT offset, int dtable) {
+int handlefile(OFFT offset, int dtable) {
   TABLE dirent;
-    
+
   //redefine fseek/ftell per platform
 #ifdef _WIN32
   int (*xbfseek)(); xbfseek = fseek;
@@ -289,7 +279,7 @@ handlefile(OFFT offset, int dtable) {
 #endif
 
   fseek(xiso, offset, SEEK_SET);
-    
+
   //time to fill the structure
   fread(dtbuf, 1, 2, xiso);			//ltable offset from current
   dirent.ltable = btols(dtbuf);
@@ -306,20 +296,20 @@ handlefile(OFFT offset, int dtable) {
     printf("Unable to allocate %d bytes\n",dirent.fnamelen+1);
     return -1;
   }
-    
+
   memset(dirent.fname,0,dirent.fnamelen+1);
   fread(dirent.fname, dirent.fnamelen, 1, xiso);	//filename
 
-  if (strstr(dirent.fname,"..") || strchr(dirent.fname, '/') || strchr(dirent.fname, '\\'))                                                                                                                                          
-    {                                                                                                                                                                                                                                
-      printf("Filename contains invalid characters");                                                                                                                                                                                
-      exit(1);                                                                                                                                                                                                                       
-    }     
-    
+  if (strstr(dirent.fname,"..") || strchr(dirent.fname, '/') || strchr(dirent.fname, '\\'))
+    {
+      printf("Filename contains invalid characters");
+      exit(1);
+    }
+
   if(verb) {
-    printf("ltable offset: %i\nrtable offset: %i\nsector: %li\nfilesize: %li\nattributes: 0x%x\nfilename length: %i\nfilename: %s\n\n", dirent.ltable, dirent.rtable, dirent.sector, dirent.size, dirent.attribs, dirent.fnamelen, dirent.fname);
+    printf("ltable offset: %i\nrtable offset: %li\nsector: %li\nfilesize: %li\nattributes: 0x%x\nfilename length: %i\nfilename: %s\n\n", dirent.ltable, dirent.rtable, dirent.sector, dirent.size, dirent.attribs, dirent.fnamelen, dirent.fname);
   }
-    
+
   //xiso compat
   if(xisocompat) {
     if(dirent.rtable != 0) {
@@ -335,17 +325,17 @@ handlefile(OFFT offset, int dtable) {
       memset(buffer,0,32);
       xbfseek(xiso,(OFFT)cpos,SEEK_SET);
     }
-      
+
   }
   //end xiso compat
-    
+
   //check for dirs with no files
   if(dirent.fnamelen != 0) {
     if ((dirent.attribs & FILE_DIR) != 0) {
       procdir(&dirent);
 
       handlefile((OFFT)dirent.sector*2048, dirent.sector);
-	  
+
 #ifdef USE_FTP
       if(ftp) {
 	ftpChdir("..");
@@ -370,10 +360,10 @@ handlefile(OFFT offset, int dtable) {
     if (dirent.ltable != 0)
       handlefile((OFFT)dtable*2048+(dirent.ltable*4), dtable);
   }
-    
+  return 0;
 }
-	
-	
+
+
 void err(char *error) {
 
   if(help == 1) {
