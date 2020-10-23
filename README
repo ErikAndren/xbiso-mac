@@ -1,3 +1,5 @@
++++ This is a fork of 0.6.1 with added mac os x support and some compiler warning fixes. No further development is expected +++
+
 This was originally developed for the purpose of being able to
 extract xdvdfs iso images under linux. This source will compile
 under win32 if  _WIN32 is defined at compile time. However due
