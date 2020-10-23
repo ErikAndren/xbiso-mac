@@ -87,12 +87,10 @@ void *buffer;
 int main(int argc, char *argv[]) {
   char *dbuf,*fname;
   long dtable, dtablesize;
-  int diri=0,ret;
-  OFFT cpos;
+  int ret;
 #ifdef USE_FTP
   char *host, *user, *pass, *initdir;
 #endif
-
 
   //redefine fseek/ftell per platform
 #ifdef _WIN32
